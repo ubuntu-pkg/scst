@@ -1,0 +1,109 @@
+#!/usr/bin/make -f
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+# Need to update this manually for now
+DKMSMODVER=3.0.0.4838
+
+SHELL=/bin/bash
+TMPROOT=$(CURDIR)/debian/tmp
+DESTDIR=$(TMPROOT)
+BINDIR=/usr/bin
+SBINDIR=/usr/sbin
+MANDIR=/usr/share/man
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+# These are used for cross-compiling and for saving the configure script
+# from having to guess our platform (since we know it already)
+export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+	confflags += --build $(DEB_HOST_GNU_TYPE)
+else
+	confflags += --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
+endif
+
+include /usr/share/quilt/quilt.make
+
+clean:
+	dh_testdir
+	dh_clean
+	$(MAKE) -C scstadmin clean
+	$(MAKE) -C iscsi-scst/usr clean
+
+install: build
+	dh_installdirs
+	$(MAKE) DESTDIR=$(TMPROOT) -C scstadmin install
+	install -vD -m 755 usr/fileio/fileio_tgt $(DESTDIR)$(BINDIR)/fileio_tgt
+
+	# hacks
+	# remove uneeded perl files
+	rm -rf $(TMPROOT)/usr/lib/perl
+	# fix incorrect man location
+	mkdir -p $(TMPROOT)/usr/share/man
+	mv -f $(TMPROOT)/usr/man/* $(TMPROOT)/usr/share/man
+	# need manual install for iscsi-scst/usr for  now
+	install -vD -m 755 iscsi-scst/usr/iscsi-scstd $(DESTDIR)$(SBINDIR)/iscsi-scstd
+	install -vD -m 644 iscsi-scst/doc/manpages/iscsi-scstd.conf.5 $(DESTDIR)$(MANDIR)/man5/iscsi-scstd.conf.5
+	install -vD -m 644 iscsi-scst/doc/manpages/iscsi-scstd.8 $(DESTDIR)$(MANDIR)/man8/iscsi-scstd.8
+	install -vD -m 755 iscsi-scst/usr/iscsi-scst-adm $(DESTDIR)$(SBINDIR)/iscsi-scst-adm
+	install -vD -m 644 iscsi-scst/doc/manpages/iscsi-scst-adm.8 $(DESTDIR)$(MANDIR)/man8/iscsi-scst-adm.8
+	# create this directory manually
+	mkdir -p $(DESTDIR)/var/lib/scst/pr
+
+	# copy example scst.conf
+	install -vD -m 644 debian/scst.conf $(DESTDIR)/etc/scst.conf
+	
+	# process scst-dkms manually
+	for f in debian/dkms.conf debian/scst-dkms.postinst debian/scst-dkms.prerm;do \
+		sed "s|@DKMSNAME@|scst|g" $$f.in > $$f ;\
+		sed -i "s|@DKMSMODVER@|$(DKMSMODVER)|g" $$f ;\
+	done
+	install -vD -m 644 debian/Makefile-dkms $(TMPROOT)/usr/src/scst-$(DKMSMODVER)/Makefile
+	install -vD -m 644 debian/dkms.conf $(TMPROOT)/usr/src/scst-$(DKMSMODVER)/dkms.conf
+	cp -a scst $(TMPROOT)/usr/src/scst-$(DKMSMODVER)/
+	mkdir $(TMPROOT)/usr/src/scst-$(DKMSMODVER)/iscsi-scst
+	cp -a iscsi-scst/{Makefile,include,kernel} $(TMPROOT)/usr/src/scst-$(DKMSMODVER)/iscsi-scst/
+	cp -a scst_local $(TMPROOT)/usr/src/scst-$(DKMSMODVER)/
+	cp -a qla2x00t $(TMPROOT)/usr/src/scst-$(DKMSMODVER)/
+	cp -a fcst $(TMPROOT)/usr/src/scst-$(DKMSMODVER)/
+
+	# install files
+	dh_installman
+	dh_install --sourcedir=$(TMPROOT)
+
+build:
+	sed -i "s/-DCONFIG_SCST_DEBUG //g" `find . -name Makefile`
+	$(MAKE) -C scstadmin
+	$(MAKE) -C iscsi-scst include/iscsi_scst_itf_ver.h
+	$(MAKE) -C iscsi-scst/usr
+	sed -i "s|/usr/local/|/usr/|g" usr/fileio/Makefile
+	$(MAKE) -C usr/fileio
+
+binary-indep: install
+
+binary-arch: install
+	dh_testdir -a
+	dh_testroot -a
+	dh_installchangelogs -p scstadmin -a scstadmin/ChangeLog
+	dh_strip -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_installdeb -a
+	dh_shlibdeps -a
+	dh_gencontrol -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary: binary-indep binary-arch
+
+.PHONY: binary binary-arch binary-indep clean checkroot

@@ -1,0 +1,73 @@
+scst (3.0.0~rc1+svn5542-ppa1~trusty) trusty; urgency=high
+
+  * Updated to v3.0.x branch, svn5542
+  * Refreshed debian/patches/prefix-usr.diff
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Fri, 23 May 2014 14:04:00 +0700
+
+scst (3.0.0~pre2+svn4839-ppa1) precise; urgency=high
+
+  * Updated to svn4839
+  * Temporary removed fcst target from dkms Makefile due to 
+    build errors on kernel 3.9.0-rc6
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Wed, 21 Apr 2013 21:36:00 +0700
+
+scst (3.0.0~pre2+svn4566-ppa1) precise; urgency=high
+
+  * Updated to svn4566
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Wed, 24 Sep 2012 09:33:00 +0700
+
+scst (3.0.0~pre2+svn4521-ppa3) precise; urgency=high
+
+  * Replace "make 2perf" with manual sed; needed for successful build
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Wed, 26 Sep 2012 20:00:00 +0700
+
+scst (3.0.0~pre2+svn4521-ppa2) precise; urgency=high
+
+  * Added scst-fileio-tgt package
+  * Added qlogic and fcst target to scst-dkms
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Mon, 24 Sep 2012 13:42:00 +0700
+
+scst (3.0.0~pre2+svn4521-ppa1) precise; urgency=high
+
+  * Updated to SCST 3.0.0-pre2, svn4521
+  * Changed source format to 3.0 (quilt)
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Fri, 21 Sep 2012 09:41:00 +0700
+
+scst (3.0.0~pre1+svn4505~ppa1) precise; urgency=high
+
+  * Updated to SCST 3.0.0-pre1, svn4505
+  * Disabled debug mode
+  * Added scst_local target
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Wed,  5 Sep 2012 08:40:00 +0700
+
+scst (3.0.0~pre1+svn4501~ppa1) precise; urgency=high
+
+  * Updated to SCST 3.0.0-pre1, svn4501
+  * Changed source package name to scst
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Fri, 31 Aug 2012 14:23:00 +0700
+
+scstadmin (2.0.0.1-1~ppa1) lucid; urgency=high
+
+  * Updated to SCST 2.0.0.1
+
+ -- Adrian Stachowski <ast@marum.de>  Mon, 31 Jan 2011 13:10:00 +0200
+
+scstadmin (2.0.0.0-1~ppa2) lucid; urgency=high
+
+  * Switch back to procfs
+
+ -- Adrian Stachowski <ast@marum.de>  Sat, 28 Sep 2010 12:32:21 +0200
+
+scstadmin (2.0.0.0-1~ppa1) lucid; urgency=high
+
+  * Initial build of scstadmin 2
+
+ -- Adrian Stachowski <ast@marum.de>  Sat, 25 Sep 2010 14:54:01 +0200

@@ -1,0 +1,206 @@
+diff -Naru a/fcst/Makefile b/fcst/Makefile
+--- a/fcst/Makefile	2013-04-21 21:29:49.000000000 +0700
++++ b/fcst/Makefile	2013-04-21 22:21:17.354088000 +0700
+@@ -48,7 +48,7 @@
+ ######### BEGIN OUT-OF-TREE RULES #########
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ ifeq ($(KVER),)
+diff -Naru a/iscsi-scst/Makefile b/iscsi-scst/Makefile
+--- a/iscsi-scst/Makefile	2013-04-21 21:29:49.000000000 +0700
++++ b/iscsi-scst/Makefile	2013-04-21 22:21:17.507402000 +0700
+@@ -6,7 +6,7 @@
+ # unless it's something special (not a .c file).
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ SHELL=/bin/bash
+diff -Naru a/iscsi-scst/Makefile_user_space_only b/iscsi-scst/Makefile_user_space_only
+--- a/iscsi-scst/Makefile_user_space_only	2013-04-21 21:29:49.000000000 +0700
++++ b/iscsi-scst/Makefile_user_space_only	2013-04-21 22:21:17.492813000 +0700
+@@ -6,7 +6,7 @@
+ # unless it's something special (not a .c file).
+ 
+ SUBDIRS := $(shell pwd)
+-SBINDIR := /usr/local/sbin
++SBINDIR := /usr/sbin
+ INITDIR := /etc/init.d
+ RCDIR := /etc/rc.d
+ 
+diff -Naru a/iscsi-scst/resource_agents/SCSTTarget b/iscsi-scst/resource_agents/SCSTTarget
+--- a/iscsi-scst/resource_agents/SCSTTarget	2013-04-21 21:29:49.000000000 +0700
++++ b/iscsi-scst/resource_agents/SCSTTarget	2013-04-21 22:21:17.512613000 +0700
+@@ -38,7 +38,7 @@
+ 
+ # Lockfile, used for selecting a target ID
+ LOCKFILE=${HA_RSCTMP}/SCSTTarget-${OCF_RESKEY_implementation}.lock
+-ISCSI_DAEMON="/usr/local/sbin/iscsi-scstd"
++ISCSI_DAEMON="/usr/sbin/iscsi-scstd"
+ SYSFS_PATH="/sys/kernel/scst_tgt/targets/iscsi"
+ SCST_BASE="/sys/kernel/scst_tgt"
+ ISCSI_BASE="${SCST_BASE}/targets/iscsi"
+diff -Naru a/iscsi-scst/usr/Makefile b/iscsi-scst/usr/Makefile
+--- a/iscsi-scst/usr/Makefile	2013-04-21 21:29:49.000000000 +0700
++++ b/iscsi-scst/usr/Makefile	2013-04-21 22:21:17.907946000 +0700
+@@ -15,7 +15,7 @@
+ #  GNU General Public License for more details.
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ SRCS_D = iscsid.c iscsi_scstd.c conn.c session.c target.c message.c ctldev.c \
+diff -Naru a/mpt/Makefile b/mpt/Makefile
+--- a/mpt/Makefile	2013-04-21 21:29:49.000000000 +0700
++++ b/mpt/Makefile	2013-04-21 22:21:10.235675000 +0700
+@@ -21,7 +21,7 @@
+ #
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ #SCST_INC_DIR := $(PREFIX)/include/scst
+diff -Naru a/mvsas_tgt/Makefile b/mvsas_tgt/Makefile
+--- a/mvsas_tgt/Makefile	2013-04-21 21:29:49.000000000 +0700
++++ b/mvsas_tgt/Makefile	2013-04-21 22:21:09.429297000 +0700
+@@ -26,7 +26,7 @@
+ #
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ ifeq ($(KVER),)
+diff -Naru a/qla2x00t/doc/qla2x00t-howto.html b/qla2x00t/doc/qla2x00t-howto.html
+--- a/qla2x00t/doc/qla2x00t-howto.html	2013-04-21 21:29:49.000000000 +0700
++++ b/qla2x00t/doc/qla2x00t-howto.html	2013-04-21 22:21:16.915059000 +0700
+@@ -166,7 +166,7 @@
+   Insert the kernel modules.<br>  The kernel modules have been installed in
+   '/lib/modules/`your_kernel_version`/extra'.<br>  In addition, scst.h,
+   scst_debug.h as well as Module.symvers or Modules.symvers have been copied
+-  to '/usr/local/include/scst'.<br> The first file contains all SCST's public
++  to '/usr/include/scst'.<br> The first file contains all SCST's public
+   interfaces used by target drivers. The other files allow target drivers to
+   generate debug messages and support the kernel module build process.
+ 
+diff -Naru a/qla2x00t/qla2x00-target/Makefile b/qla2x00t/qla2x00-target/Makefile
+--- a/qla2x00t/qla2x00-target/Makefile	2013-04-21 21:29:49.000000000 +0700
++++ b/qla2x00t/qla2x00-target/Makefile	2013-04-21 22:21:16.852975000 +0700
+@@ -78,7 +78,7 @@
+ ######### BEGIN OUT-OF-TREE RULES #########
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ INSTALL_DIR := $(INSTALL_MOD_PATH)/lib/modules/$(KVER)/extra
+diff -Naru a/scst/README b/scst/README
+--- a/scst/README	2013-04-21 21:29:49.000000000 +0700
++++ b/scst/README	2013-04-21 22:21:15.936723000 +0700
+@@ -99,7 +99,7 @@
+ device handlers. To install them type 'make scst_install'. The driver
+ modules will be installed in '/lib/modules/`you_kernel_version`/extra'.
+ In addition, scst.h, scst_debug.h as well as Module.symvers or
+-Modules.symvers will be copied to '/usr/local/include/scst'. The first
++Modules.symvers will be copied to '/usr/include/scst'. The first
+ file contains all SCST's public data definition, which are used by
+ target drivers. The other ones support debug messages logging and build
+ process.
+diff -Naru a/scst/src/Makefile b/scst/src/Makefile
+--- a/scst/src/Makefile	2013-04-21 21:29:50.000000000 +0700
++++ b/scst/src/Makefile	2013-04-21 22:21:16.320410000 +0700
+@@ -28,7 +28,7 @@
+ #
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ SHELL=/bin/bash
+diff -Naru a/scst_local/Makefile b/scst_local/Makefile
+--- a/scst_local/Makefile	2013-04-21 21:29:50.000000000 +0700
++++ b/scst_local/Makefile	2013-04-21 22:21:16.512384000 +0700
+@@ -26,7 +26,7 @@
+ ######### BEGIN OUT-OF-TREE RULES #########
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ ifeq ($(KVER),)
+diff -Naru a/scstadmin/Makefile b/scstadmin/Makefile
+--- a/scstadmin/Makefile	2013-04-21 21:29:50.000000000 +0700
++++ b/scstadmin/Makefile	2013-04-21 22:21:10.091280000 +0700
+@@ -1,4 +1,4 @@
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+diff -Naru a/scstadmin/scstadmin.procfs/Makefile b/scstadmin/scstadmin.procfs/Makefile
+--- a/scstadmin/scstadmin.procfs/Makefile	2013-04-21 21:29:50.000000000 +0700
++++ b/scstadmin/scstadmin.procfs/Makefile	2013-04-21 22:21:10.068461000 +0700
+@@ -1,5 +1,5 @@
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ MODULE_VERSION = 0.8.22
+diff -Naru a/scstadmin/scstadmin.sysfs/Makefile b/scstadmin/scstadmin.sysfs/Makefile
+--- a/scstadmin/scstadmin.sysfs/Makefile	2013-04-21 21:29:50.000000000 +0700
++++ b/scstadmin/scstadmin.sysfs/Makefile	2013-04-21 22:21:09.957997000 +0700
+@@ -1,5 +1,5 @@
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ MODULE_VERSION = 0.9.10
+diff -Naru a/srpt/Makefile b/srpt/Makefile
+--- a/srpt/Makefile	2013-04-21 21:29:50.000000000 +0700
++++ b/srpt/Makefile	2013-04-21 22:21:16.574251000 +0700
+@@ -2,7 +2,7 @@
+ # Makefile for ib_srpt.ko.
+ #
+ ifndef PREFIX
+-	PREFIX=/usr/local
++	PREFIX=/usr
+ endif
+ 
+ SCST_INC_DIR := $(shell if [ -e "$$PWD/../scst" ];			\
+diff -Naru a/usr/fileio/Makefile b/usr/fileio/Makefile
+--- a/usr/fileio/Makefile	2013-04-21 21:29:50.000000000 +0700
++++ b/usr/fileio/Makefile	2013-04-21 22:21:09.861760000 +0700
+@@ -15,7 +15,7 @@
+ #  GNU General Public License for more details.
+ 
+ ifndef PREFIX
+-        PREFIX=/usr/local
++        PREFIX=/usr
+ endif
+ 
+ SHELL=/bin/bash
+diff -Naru a/scstadmin/scstadmin.sysfs/scst-0.9.10/Makefile.PL b/scstadmin/scstadmin.sysfs/scst-0.9.10/Makefile.PL
+--- a/scstadmin/scstadmin.sysfs/scst-0.9.10/Makefile.PL	2013-04-21 21:29:50.000000000 +0700
++++ b/scstadmin/scstadmin.sysfs/scst-0.9.10/Makefile.PL	2013-04-21 23:40:34.523949000 +0700
+@@ -10,4 +10,5 @@
+         'VERSION_FROM'  => 'lib/SCST/SCST.pm',
+         'AUTHOR'        => 'Mark R. Buechler <Mark.Buechler@gmail.com>',
+         'PREREQ_PM'     => {},
++        'PREFIX'        => '/usr',
+ );

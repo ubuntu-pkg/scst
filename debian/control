@@ -1,0 +1,29 @@
+Source: scst
+Section: net
+Priority: extra
+Maintainer: Adrian Stachowski <ast@marum.de>
+Build-Depends: debhelper (>= 6.0.7),
+ quilt,
+ dpkg-dev (>= 1.13.19)
+Standards-Version: 3.8.3
+Homepage: http://scst.sourceforge.net
+
+Package: iscsi-scst
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: ISCSI userland for SCST
+
+Package: scst-fileio-tgt
+Architecture: any
+Depends: scstadmin, ${shlibs:Depends}
+Description: SCST fileio userland target
+
+Package: scstadmin
+Architecture: any
+Depends: iscsi-scst, ${shlibs:Depends}
+Description: Admin tool for SCST
+
+Package: scst-dkms
+Architecture: any
+Depends: dkms
+Description: kernel module (dkms version) for SCST
