@@ -1542,9 +1542,8 @@ static int cmnd_prepare_recv_pdu(struct iscsi_conn *conn,
 	iscsi_extracheck_is_rd_thread(conn);
 
 	buff_offs = offset;
-	idx = (offset + sg[0].offset) >> PAGE_SHIFT;
-	if (offset + sg[0].offset >= PAGE_SIZE)
-		offset += sg[0].offset;
+	offset += sg[0].offset;
+	idx = offset >> PAGE_SHIFT;
 	offset &= ~PAGE_MASK;
 
 	conn->read_msg.msg_iov = conn->read_iov;
@@ -1563,9 +1562,9 @@ static int cmnd_prepare_recv_pdu(struct iscsi_conn *conn,
 			offset = 0;
 		}
 
-		addr = (char __force __user *)(sg_virt(&sg[idx]));
+		addr = (char __force __user *)(page_address(sg_page(&sg[idx])));
 		EXTRACHECKS_BUG_ON(addr == NULL);
-		sg_len = sg[idx].length - offset;
+		sg_len = sg[idx].offset + sg[idx].length - offset;
 
 		conn->read_iov[i].iov_base = addr + offset;
 
@@ -3610,7 +3609,7 @@ static void iscsi_task_mgmt_fn_done(struct scst_mgmt_cmd *scst_mcmd)
 	case SCST_ABORT_ALL_TASKS_SESS:
 	case SCST_ABORT_ALL_TASKS:
 	case SCST_NEXUS_LOSS:
-		sBUG_ON(1);
+		sBUG();
 		break;
 	default:
 		iscsi_send_task_mgmt_resp(req, status, scst_mgmt_cmd_dropped(scst_mcmd));
@@ -4009,8 +4008,7 @@ int iscsi_threads_pool_get(const cpumask_t *cpu_mask,
 
 	list_for_each_entry(p, &iscsi_thread_pools_list,
 			thread_pools_list_entry) {
-		if ((cpu_mask == NULL) ||
-		    __cpus_equal(cpu_mask, &p->cpu_mask, nr_cpumask_bits)) {
+		if (!cpu_mask || cpumask_equal(cpu_mask, &p->cpu_mask)) {
 			p->thread_pool_ref++;
 			TRACE_DBG("iSCSI thread pool %p found (new ref %d)",
 				p, p->thread_pool_ref);
@@ -4044,12 +4042,9 @@ int iscsi_threads_pool_get(const cpumask_t *cpu_mask,
 	INIT_LIST_HEAD(&p->wr_list);
 	init_waitqueue_head(&p->wr_waitQ);
 	if (cpu_mask == NULL)
-		cpus_setall(p->cpu_mask);
-	else {
-		cpus_clear(p->cpu_mask);
-		for_each_cpu(i, cpu_mask)
-			cpu_set(i, p->cpu_mask);
-	}
+		cpumask_setall(&p->cpu_mask);
+	else
+		cpumask_copy(&p->cpu_mask, cpu_mask);
 	p->thread_pool_ref = 1;
 	INIT_LIST_HEAD(&p->threads_list);
 

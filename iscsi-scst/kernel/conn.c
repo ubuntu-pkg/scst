@@ -91,9 +91,7 @@ void conn_info_show(struct seq_file *seq, struct iscsi_session *session)
 	struct sock *sk;
 	char buf[64];
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
 	lockdep_assert_held(&session->target->target_mutex);
-#endif
 
 	list_for_each_entry(conn, &session->conn_list, conn_list_entry) {
 		sk = conn->sock->sk;
@@ -106,6 +104,7 @@ void conn_info_show(struct seq_file *seq, struct iscsi_session *session)
 				 "%pI4", &inet_sk(sk)->inet_daddr);
 #endif
 			break;
+#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
 		case AF_INET6:
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 			snprintf(buf, sizeof(buf),
@@ -119,6 +118,7 @@ void conn_info_show(struct seq_file *seq, struct iscsi_session *session)
 				&sk->sk_v6_daddr);
 #endif
 			break;
+#endif
 		default:
 			snprintf(buf, sizeof(buf), "Unknown family %d",
 				sk->sk_family);
@@ -172,19 +172,22 @@ static ssize_t iscsi_get_initiator_ip(struct iscsi_conn *conn,
 			"%pI4", &inet_sk(sk)->inet_daddr);
 #endif
 		break;
+#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
 	case AF_INET6:
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 		pos = scnprintf(buf, size,
 			 "[%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x]",
 			 NIP6(inet6_sk(sk)->daddr));
 #else
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0) && \
+	(!defined(RHEL_MAJOR) || RHEL_MAJOR -0 < 7)
 		pos = scnprintf(buf, size, "[%p6]", &inet6_sk(sk)->daddr);
 #else
 		pos = scnprintf(buf, size, "[%p6]", &sk->sk_v6_daddr);
 #endif
 #endif
 		break;
+#endif
 	default:
 		pos = scnprintf(buf, size, "Unknown family %d",
 			sk->sk_family);
@@ -280,9 +283,7 @@ static int conn_sysfs_add(struct iscsi_conn *conn)
 
 	TRACE_ENTRY();
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
 	lockdep_assert_held(&conn->target->target_mutex);
-#endif
 
 	iscsi_get_initiator_ip(conn, addr, sizeof(addr));
 
@@ -352,9 +353,7 @@ struct iscsi_conn *conn_lookup(struct iscsi_session *session, u16 cid)
 {
 	struct iscsi_conn *conn;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
 	lockdep_assert_held(&session->target->target_mutex);
-#endif
 
 	/*
 	 * We need to find the latest conn to correctly handle
@@ -480,7 +479,11 @@ static void iscsi_state_change(struct sock *sk)
 	return;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
+static void iscsi_data_ready(struct sock *sk)
+#else
 static void iscsi_data_ready(struct sock *sk, int len)
+#endif
 {
 	struct iscsi_conn *conn = sk->sk_user_data;
 
@@ -488,7 +491,11 @@ static void iscsi_data_ready(struct sock *sk, int len)
 
 	iscsi_make_conn_rd_active(conn);
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
+	conn->old_data_ready(sk);
+#else
 	conn->old_data_ready(sk, len);
+#endif
 
 	TRACE_EXIT();
 	return;
@@ -823,9 +830,7 @@ int conn_free(struct iscsi_conn *conn)
 	TRACE_MGMT_DBG("Freeing conn %p (sess=%p, %#Lx %u)", conn,
 		session, (long long unsigned int)session->sid, conn->cid);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
 	lockdep_assert_held(&conn->target->target_mutex);
-#endif
 
 	del_timer_sync(&conn->rsp_timer);
 
@@ -878,9 +883,7 @@ static int iscsi_conn_alloc(struct iscsi_session *session,
 	struct iscsi_conn *conn;
 	int res = 0;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
 	lockdep_assert_held(&session->target->target_mutex);
-#endif
 
 	conn = kmem_cache_zalloc(iscsi_conn_cache, GFP_KERNEL);
 	if (!conn) {
@@ -986,9 +989,7 @@ int __add_conn(struct iscsi_session *session, struct iscsi_kern_conn_info *info)
 	int err;
 	bool reinstatement = false;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
 	lockdep_assert_held(&session->target->target_mutex);
-#endif
 
 	conn = conn_lookup(session, info->cid);
 	if ((conn != NULL) &&

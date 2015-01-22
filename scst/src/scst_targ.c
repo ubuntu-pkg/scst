@@ -1853,8 +1853,8 @@ static int scst_report_luns_local(struct scst_cmd *cmd)
 	cmd->driver_status = 0;
 
 	if ((cmd->cdb[2] != 0) && (cmd->cdb[2] != 2)) {
-		PRINT_ERROR("Unsupported SELECT REPORT value %x in REPORT "
-			"LUNS command", cmd->cdb[2]);
+		TRACE(TRACE_MINOR, "Unsupported SELECT REPORT value %x in "
+			"REPORT LUNS command", cmd->cdb[2]);
 		scst_set_invalid_field_in_cdb(cmd, 2, 0);
 		goto out_compl;
 	}
@@ -2288,7 +2288,7 @@ static int scst_report_supported_opcodes(struct scst_cmd *cmd)
 		}
 		break;
 	default:
-		sBUG_ON(1);
+		sBUG();
 		goto out_compl;
 	}
 
@@ -3383,11 +3383,21 @@ static int scst_check_sense(struct scst_cmd *cmd)
 
 	/* If we had internal bus reset behind us, set the command error UA */
 	if ((dev->scsi_dev != NULL) &&
-	    unlikely(cmd->host_status == DID_RESET) &&
-	    ((cmd->op_flags & SCST_SKIP_UA) == 0)) {
-		TRACE(TRACE_MGMT, "DID_RESET: was_reset=%d host_status=%x",
-		      dev->scsi_dev->was_reset, cmd->host_status);
-		scst_set_cmd_error(cmd, SCST_LOAD_SENSE(scst_sense_reset_UA));
+	    unlikely(cmd->host_status == DID_RESET)) {
+		if ((cmd->op_flags & SCST_SKIP_UA) == 0) {
+			TRACE(TRACE_MGMT, "DID_RESET: was_reset=%d host_status=%x",
+			      dev->scsi_dev->was_reset, cmd->host_status);
+			scst_set_cmd_error(cmd, SCST_LOAD_SENSE(scst_sense_reset_UA));
+		} else {
+			int sl;
+			uint8_t sense[SCST_STANDARD_SENSE_LEN];
+			TRACE(TRACE_MGMT, "DID_RESET received for device %s, "
+				"triggering reset UA", dev->virt_name);
+			sl = scst_set_sense(sense, sizeof(sense), dev->d_sense,
+				SCST_LOAD_SENSE(scst_sense_reset_UA));
+			scst_dev_check_set_UA(dev, NULL, sense, sl);
+			scst_abort_cmd(cmd, NULL, false, false);
+		}
 		/* It looks like it is safe to clear was_reset here */
 		dev->scsi_dev->was_reset = 0;
 	}
@@ -3482,8 +3492,23 @@ static bool scst_check_auto_sense(struct scst_cmd *cmd)
 		if ((cmd->host_status == DID_REQUEUE) ||
 		    (cmd->host_status == DID_IMM_RETRY) ||
 		    (cmd->host_status == DID_SOFT_ERROR) ||
-		    (cmd->host_status == DID_ABORT)) {
+		    (cmd->host_status == DID_BUS_BUSY) ||
+		    (cmd->host_status == DID_TRANSPORT_DISRUPTED) ||
+		    (cmd->host_status == DID_TRANSPORT_FAILFAST) ||
+		    (cmd->host_status == DID_ALLOC_FAILURE)) {
 			scst_set_busy(cmd);
+		} else if (cmd->host_status == DID_RESET) {
+			/* Postpone handling to scst_check_sense() */
+		} else if ((cmd->host_status == DID_ABORT) ||
+			   (cmd->host_status == DID_NO_CONNECT) ||
+			   (cmd->host_status == DID_TIME_OUT) ||
+			   (cmd->host_status == DID_NEXUS_FAILURE)) {
+			scst_abort_cmd(cmd, NULL, false, false);
+		} else if (cmd->host_status == DID_MEDIUM_ERROR) {
+			if (cmd->data_direction & SCST_DATA_WRITE)
+				scst_set_cmd_error(cmd,	SCST_LOAD_SENSE(scst_sense_write_error));
+			else
+				scst_set_cmd_error(cmd,	SCST_LOAD_SENSE(scst_sense_read_error));
 		} else {
 			TRACE(TRACE_SCSI|TRACE_MINOR_AND_MGMT_DBG, "Host "
 				"status 0x%x received, returning HARDWARE ERROR "
@@ -5996,6 +6021,8 @@ static int scst_lun_reset(struct scst_mgmt_cmd *mcmd)
 		TRACE(TRACE_MGMT, "Resetting host %d bus ",
 		      dev->scsi_dev->host->host_no);
 		rc = scsi_reset_provider(dev->scsi_dev, SCSI_TRY_RESET_DEVICE);
+		TRACE(TRACE_MGMT, "scsi_reset_provider(%s) returned %d",
+		      dev->virt_name, rc);
 #if 0
 		if (rc != SUCCESS && mcmd->status == SCST_MGMT_STATUS_SUCCESS)
 			scst_mgmt_cmd_set_status(mcmd, SCST_MGMT_STATUS_FAILED);
@@ -6991,9 +7018,7 @@ static char *scst_get_unique_sess_name(struct list_head *sysfs_sess_list,
 	int len = 0, n = 1;
 
 	BUG_ON(!initiator_name);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
 	lockdep_assert_held(&scst_mutex);
-#endif
 
 restart:
 	list_for_each_entry(s, sysfs_sess_list, sysfs_sess_list_entry) {

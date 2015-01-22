@@ -76,6 +76,27 @@ static int strncasecmp(const char *s1, const char *s2, size_t n)
 }
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 22)
+char *kvasprintf(gfp_t gfp, const char *fmt, va_list ap)
+{
+	unsigned int len;
+	char *p;
+	va_list aq;
+
+	va_copy(aq, ap);
+	len = vsnprintf(NULL, 0, fmt, aq);
+	va_end(aq);
+
+	p = kmalloc_track_caller(len + 1, gfp);
+	if (!p)
+		return NULL;
+
+	vsnprintf(p, len + 1, fmt, ap);
+
+	return p;
+}
+#endif
+
 #if !((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30)) && defined(SCSI_EXEC_REQ_FIFO_DEFINED)) && !defined(HAVE_SG_COPY)
 static int sg_copy(struct scatterlist *dst_sg, struct scatterlist *src_sg,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)
@@ -3761,9 +3782,7 @@ void scst_free_device(struct scst_device *dev)
 
 bool scst_device_is_exported(struct scst_device *dev)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
 	lockdep_assert_held(&scst_mutex);
-#endif
 
 	WARN_ON_ONCE(!dev->dev_tgt_dev_list.next);
 
@@ -6647,7 +6666,7 @@ static int get_cdb_info_read_pos(struct scst_cmd *cmd,
 		cmd->bufflen = 32;
 		break;
 	case 8:
-		cmd->bufflen = max(28, cmd->bufflen);
+		cmd->bufflen = max(32, cmd->bufflen);
 		break;
 	default:
 		PRINT_ERROR("READ POSITION: Invalid service action %x",
@@ -9023,15 +9042,10 @@ static void scst_process_qerr(struct scst_cmd *cmd)
 int scst_process_check_condition(struct scst_cmd *cmd)
 {
 	int res;
-	struct scst_order_data *order_data;
-	struct scst_device *dev;
 
 	TRACE_ENTRY();
 
 	EXTRACHECKS_BUG_ON(test_bit(SCST_CMD_NO_RESP, &cmd->cmd_flags));
-
-	order_data = cmd->cur_order_data;
-	dev = cmd->dev;
 
 	TRACE_DBG("CHECK CONDITION for cmd %p (tgt_dev %p)", cmd, cmd->tgt_dev);
 
@@ -9394,7 +9408,7 @@ int scst_parse_descriptors(struct scst_cmd *cmd)
 		res = scst_parse_unmap_descriptors(cmd);
 		break;
 	default:
-		sBUG_ON(1);
+		sBUG();
 		res = -1;
 		break;
 	}
@@ -9412,7 +9426,7 @@ static void scst_free_descriptors(struct scst_cmd *cmd)
 		scst_free_unmap_descriptors(cmd);
 		break;
 	default:
-		sBUG_ON(1);
+		sBUG();
 		break;
 	}
 
@@ -9749,7 +9763,8 @@ void scst_vfs_unlink_and_put(struct nameidata *nd)
 #else
 void scst_vfs_unlink_and_put(struct path *path)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0) && \
+	(!defined(RHEL_MAJOR) || RHEL_MAJOR -0 < 7)
 	vfs_unlink(path->dentry->d_parent->d_inode, path->dentry);
 #else
 	vfs_unlink(path->dentry->d_parent->d_inode, path->dentry, NULL);

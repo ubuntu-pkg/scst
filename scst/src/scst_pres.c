@@ -858,15 +858,16 @@ out:
 
 static void scst_pr_remove_device_files(struct scst_tgt_dev *tgt_dev)
 {
-	int res = 0;
 	struct scst_device *dev = tgt_dev->dev;
 
 	TRACE_ENTRY();
 
 	scst_assert_pr_mutex_held(dev);
 
-	res = dev->pr_file_name ? scst_remove_file(dev->pr_file_name) : -ENOENT;
-	res = dev->pr_file_name1 ? scst_remove_file(dev->pr_file_name1) : -ENOENT;
+	if (dev->pr_file_name)
+		scst_remove_file(dev->pr_file_name);
+	if (dev->pr_file_name1)
+		scst_remove_file(dev->pr_file_name1);
 
 	TRACE_EXIT();
 	return;
@@ -1106,19 +1107,21 @@ int scst_pr_set_file_name(struct scst_device *dev, char **prev,
 
 	res = -EINVAL;
 	if (pr_file_name[0] != '/') {
-		PRINT_ERROR("PR file name must be absolute!");
+		PRINT_ERROR("PR file name %s must be absolute!", pr_file_name);
 		goto out;
 	}
 
 	file_mode = scst_get_file_mode(pr_file_name);
 	if (file_mode >= 0 && !S_ISREG(file_mode) && !S_ISBLK(file_mode)) {
-		PRINT_ERROR("PR file name must be file or block device!");
+		PRINT_ERROR("PR file name %s must be file or block device!",
+			    pr_file_name);
 		goto out;
 	}
 
 	res = -ENOENT;
 	if (!scst_parent_dir_exists(pr_file_name)) {
-		PRINT_ERROR("PR file name parent directory doesn't exist");
+		PRINT_ERROR("PR file name %s parent directory doesn't exist",
+			    pr_file_name);
 		goto out;
 	}
 
@@ -2566,7 +2569,7 @@ void scst_pr_read_reservation(struct scst_cmd *cmd, uint8_t *buffer,
 	int buffer_size)
 {
 	struct scst_device *dev = cmd->dev;
-	uint8_t b[24];
+	uint8_t b[24] = { };
 	int size = 0;
 
 	TRACE_ENTRY();
@@ -2578,8 +2581,6 @@ void scst_pr_read_reservation(struct scst_cmd *cmd, uint8_t *buffer,
 			"(buffer %p)", buffer_size, buffer);
 		goto out;
 	}
-
-	memset(b, 0, sizeof(b));
 
 	put_unaligned_be32(dev->pr_generation, &b[0]);
 

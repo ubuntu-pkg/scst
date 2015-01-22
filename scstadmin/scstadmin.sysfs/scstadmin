@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-$Version  = 'SCST Configurator v3.0.0-pre2';
+$Version  = 'SCST Configurator v3.0.0';
 
 # Configures SCST
 #
@@ -1751,6 +1751,8 @@ sub writeConfiguration {
 		}
 	}
 
+	$io->flush;
+	$io->sync;
 	close $io;
 
 	return 0;
