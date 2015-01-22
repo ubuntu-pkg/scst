@@ -1,3 +1,9 @@
+scst (3.0.0~rc1+svn5930-ppa1~trusty) trusty; urgency=high
+
+  * Updated to svn5930 (v3.0.x)
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Thu, 22 Jan 2015 16:26:00 +0700
+
 scst (3.0.0~rc1+svn5542-ppa1~trusty) trusty; urgency=high
 
   * Updated to v3.0.x branch, svn5542
