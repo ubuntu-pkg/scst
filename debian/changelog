@@ -1,0 +1,5 @@
+scst (3.4.0~svn7394-1bionic1) bionic; urgency=medium
+
+  * Initial 3.4 git package
+
+ -- Fajar A. Nugraha <ubuntu-ppa@fajar.net>  Wed, 11 Apr 2018 19:49:00 +0700

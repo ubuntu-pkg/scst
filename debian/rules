@@ -13,9 +13,12 @@ export DH_VERBOSE = 1
 # package maintainers to append LDFLAGS
 #export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 
-SUBDIRS=scst fcst iscsi-scst qla2x00t/qla2x00-target scst_local scstadmin srpt
+SUBDIRS=scst iscsi-scst scstadmin
 DESTDIR=$(CURDIR)/debian/tmp
 VERSION:=$(shell head -n1 debian/changelog | sed 's/.*(\([0-9.]*\).*).*/\1/')
+
+KVER=$(shell ls /lib/modules/*/build/.config | head -n 1  | awk -F / '{print $$4}')
+export KVER
 
 %:
 	echo "*** dh $@ ***"
@@ -24,7 +27,7 @@ VERSION:=$(shell head -n1 debian/changelog | sed 's/.*(\([0-9.]*\).*).*/\1/')
 clean:
 	dh_testdir &&							\
 	dh_prep -Xqla_isp/TAGS -Xdebian/changelog &&			\
-	scripts/clean-source-tree -x debian/changelog &&		\
+	scripts/clean-source-tree &&                                    \
 	rm -f scstadmin/scstadmin
 
 build:
@@ -59,7 +62,6 @@ install:
 		    break;						\
 	    fi;								\
 	done &&								\
-	make 2debug &&							\
 	rm -f "$(DESTDIR)"/lib/modules/*/[Mm]odule* &&			\
 	mkdir -p $(DESTDIR)/usr/src/scst-$(VERSION) &&			\
 	for f in scst.dkms scst-dkms.postinst scst-dkms.prerm; do	\
@@ -75,6 +77,8 @@ install:
 	find $(DESTDIR) -type f -print0 | xargs -0 -r chmod 0644 &&	\
 	find $(DESTDIR) -type d -print0 | xargs -0 -r chmod 0755 &&	\
 	mv "$(DESTDIR)"/usr/man "$(DESTDIR)"/usr/share/man &&		\
+	mkdir -p debian/scstadmin/etc &&                            \
+	install -vD -m 644 debian/scst.sample.conf debian/scstadmin/etc/scst.sample.conf &&\
 	dh_install &&							\
 	dh_installman &&						\
 	dh_installchangelogs &&						\
@@ -96,11 +100,6 @@ binary: binary-indep binary-arch
 
 override_dh_installinit:
 	dh_installinit --onlyscripts
-
-# dh_make generated override targets
-# This is example for Cmake (See https://bugs.debian.org/641051 )
-#override_dh_auto_configure:
-#	dh_auto_configure -- #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
 
 .PHONY: clean binary binary-arch binary-indep build build-arch build-indep \
 	install

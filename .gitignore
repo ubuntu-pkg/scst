@@ -18,7 +18,6 @@
 debian/*.debhelper.log
 debian/*.substvars
 debian/.debhelper/
-debian/changelog
 debian/files
 debian/iscsi-scst/
 debian/scst-dev/

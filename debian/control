@@ -3,19 +3,11 @@ Section: net
 Priority: optional
 Maintainer: Vladislav Bolkhovitin <vst@vlnb.net>
 Build-Depends: debhelper (>= 9),
- quilt,
- dpkg-dev (>= 1.13.19)
+ dpkg-dev (>= 1.13.19),
+ libelf-dev,
+ linux-headers | linux-headers-generic
 Standards-Version: 4.1.1
 Homepage: http://scst.sourceforge.net
-
-Package: scst
-Architecture: any
-Depends: ${misc:Depends}
-Conflicts: scst-dkms
-Description: Generic SCSI target framework
- SCST is a SCSI target framework that allows local block device data to be
- accessed over a storage network via the iSCSI, FC, SRP or FCoE protocol.
- This package contains the SCST kernel modules.
 
 Package: scst-dkms
 Architecture: all
