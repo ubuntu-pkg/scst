@@ -70,15 +70,13 @@ install:
 	done &&								\
 	cp debian/scst.dkms						\
 		$(DESTDIR)/usr/src/scst-$(VERSION)/dkms.conf &&		\
-	scripts/list-source-files |					\
-	grep -E '^Makefile$$|^(fcst|iscsi-scst|qla2x00t|scst|scst_local|srpt)/'|\
-	tar -T- -cf- |							\
+	tar -Tdebian/scst-dkms.source-list -cf- |							\
 	tar -C $(DESTDIR)/usr/src/scst-$(VERSION) -xf- &&		\
 	find $(DESTDIR) -type f -print0 | xargs -0 -r chmod 0644 &&	\
 	find $(DESTDIR) -type d -print0 | xargs -0 -r chmod 0755 &&	\
 	mv "$(DESTDIR)"/usr/man "$(DESTDIR)"/usr/share/man &&		\
 	mkdir -p debian/scstadmin/etc &&                            \
-	install -vD -m 644 debian/scst.sample.conf debian/scstadmin/etc/scst.sample.conf &&\
+	install -m 600 debian/scst.sample.conf $(DESTDIR)/etc/ &&	\
 	dh_install &&							\
 	dh_installman &&						\
 	dh_installchangelogs &&						\

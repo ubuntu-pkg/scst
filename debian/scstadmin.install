@@ -1,3 +1,4 @@
+etc/scst.sample.conf
 etc/init.d/scst
 usr/sbin/scstadmin
 usr/share/perl/
