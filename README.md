@@ -19,7 +19,7 @@ sudo mk-build-deps -i -r
 
 * Build
  ```
-dpkg-buildpackage -b -uc -ui
+dpkg-buildpackage -b -uc
  ```
 
 # Installing scst Ubuntu package
