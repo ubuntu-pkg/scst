@@ -1,6 +1,6 @@
-# Building scst Ubuntu package
+# Build
 
-Tested on Ubuntu 18.04. Prebuilt packages available on [releases](https://github.com/ubuntu-pkg/scst/releases) page.
+Tested on Ubuntu 16.04 and 18.04. Prebuilt packages available on [releases](https://github.com/ubuntu-pkg/scst/releases) page and [ppa](https://launchpad.net/~scst/+archive/ubuntu/3.4.x).
 
 * Create an empty working directory
  ```
@@ -17,12 +17,12 @@ cd scst
 sudo mk-build-deps -i -r
  ```
 
-* Build
+* Build package
  ```
 dpkg-buildpackage -b -uc
  ```
 
-# Installing scst Ubuntu package
+# Install
 
 * Install built package
  ```
